@@ -53,7 +53,7 @@ DrawerType2 {
             headerText: root.headerText
         }
 
-        ListView {
+        ListViewType {
             id: listView
 
             anchors.top: header.bottom
@@ -61,14 +61,7 @@ DrawerType2 {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            property bool isFocusable: true
-
-            ScrollBar.vertical: ScrollBarType {}
-
-            model: 1
-
-            clip: true
-            reuseItems: true
+            model: 1 // fake model to force the ListView to be created without a model
 
             header: ColumnLayout {
                 width: listView.width
@@ -185,9 +178,21 @@ DrawerType2 {
                         Connections {
                             target: copyNativeConfigStringButton
                             function onClicked() {
-                                nativeConfigString.selectAll()
-                                nativeConfigString.copy()
-                                nativeConfigString.select(0, 0)
+                                const headerItem = configListView.headerItem;
+                                if (!headerItem) {
+                                    console.error("Failed to copy: header item not found in ListView")
+                                    return
+                                }
+
+                                const nativeConfigStringItem = configListView.findChildWithObjectName(headerItem.children, "nativeConfigString");
+                                if (!nativeConfigStringItem) {
+                                    console.error("Failed to copy: nativeConfigString item not found in ListView")
+                                    return
+                                }
+
+                                nativeConfigStringItem.selectAll()
+                                nativeConfigStringItem.copy()
+                                nativeConfigStringItem.select(0, 0)
                                 PageController.showNotificationMessage(qsTr("Copied"))
                             }
                         }
@@ -195,11 +200,22 @@ DrawerType2 {
                         Connections {
                             target: copyConfigTextButton
                             function onClicked() {
-                                configText.selectAll()
-                                configText.copy()
-                                configText.select(0, 0)
+                                const headerItem = configListView.headerItem;
+                                if (!headerItem) {
+                                    console.error("Failed to copy: header item not found in ListView")
+                                    return
+                                }
+
+                                const configTextItem = configListView.findChildWithObjectName(headerItem.children, "configText");
+                                if (!configTextItem) {
+                                    console.error("Failed to copy: configText item not found in ListView")
+                                    return
+                                }
+
+                                configTextItem.selectAll()
+                                configTextItem.copy()
+                                configTextItem.select(0, 0)
                                 PageController.showNotificationMessage(qsTr("Copied"))
-                                header.forceActiveFocus()
                             }
                         }
 
@@ -214,30 +230,37 @@ DrawerType2 {
                             backButtonFunction: function() { configContentDrawer.closeTriggered() }
                         }
 
-                        FlickableType {
+                        ListViewType {
+                            id: configListView
+
                             anchors.top: backButton.bottom
+                            anchors.bottom: parent.bottom
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            contentHeight: configContent.implicitHeight + configContent.anchors.topMargin + configContent.anchors.bottomMargin
 
-                            ColumnLayout {
-                                id: configContent
+                            model: 1 // fake model to force the ListView to be created without a model
 
-                                anchors.fill: parent
-                                anchors.rightMargin: 16
-                                anchors.leftMargin: 16
+                            header: ColumnLayout {
+                                width: configListView.width
 
                                 Header2Type {
                                     id: configContentHeader
+
                                     Layout.fillWidth: true
                                     Layout.topMargin: 16
+                                    Layout.leftMargin: 16
+                                    Layout.rightMargin: 16
 
                                     headerText: root.configContentHeaderText
                                 }
 
                                 TextField {
                                     id: nativeConfigString
+                                    objectName: "nativeConfigString"
+
+                                    Layout.leftMargin: 16
+                                    Layout.rightMargin: 16
+
                                     visible: false
                                     text: ExportController.nativeConfigString
 
@@ -248,10 +271,13 @@ DrawerType2 {
 
                                 TextArea {
                                     id: configText
+                                    objectName: "configText"
 
                                     Layout.fillWidth: true
                                     Layout.topMargin: 16
                                     Layout.bottomMargin: 16
+                                    Layout.leftMargin: 16
+                                    Layout.rightMargin: 16
 
                                     padding: 0
                                     leftPadding: 0
